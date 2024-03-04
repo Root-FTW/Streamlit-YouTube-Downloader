@@ -1,5 +1,3 @@
-
-
 # Streamlit YouTube Downloader
 
 Streamlit YouTube Downloader is a simple web application built with Streamlit and Pytube that allows users to download YouTube videos or audio by providing a link and selecting options such as download type, quality, and download path.
@@ -18,28 +16,42 @@ Streamlit YouTube Downloader is a simple web application built with Streamlit an
 
 1. Clone the repository:
 
-`bash
+```
 git clone https://github.com/your_username/streamlit-youtube-downloader.git
+```
 
-# Navigate to the project directory:
+2.  Navigate to the project directory:
+
+```
 cd streamlit-youtube-downloader
+```
 
-# Install the required dependencies
+3. Install the required dependencies
+
+```
 pip install -r requirements.txt
+```
 
-# Run the Streamlit app
+## Usage
+
+1. Run the Streamlit app
+
+```
 streamlit run app.py
+```
 
-Open your web browser and navigate to the provided URL (usually http://localhost:8501) to access the application.
+2. Open your web browser and navigate to the provided URL (usually http://localhost:8501) to access the application.
 
-Enter the YouTube video link and select download options.
+3. Enter the YouTube video link and select download options.
 
-Click the "Download" button to initiate the download
+4. Click the `Download` button to initiate the download.
 
-Contributing
+## Contributing
+
 Contributions are welcome! If you find any bugs or have suggestions for improvements, please open an issue or create a pull request
 
-License
+## License
+
 This project is licensed under the MIT License
 
-Coded with ❤️ by TELVIN TEUM
+Coded with :heart: by TELVIN TEUM
