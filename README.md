@@ -14,19 +14,37 @@ Streamlit YouTube Downloader is a simple web application built with Streamlit an
 
 ## Installation
 
-1. Clone the repository:
+1. Clone the repository
 
 ```
-git clone https://github.com/your_username/streamlit-youtube-downloader.git
+git clone https://github.com/Telviaz/streamlit-youtube-downloader.git
 ```
 
-2.  Navigate to the project directory:
+2. Navigate to the project directory
 
 ```
 cd streamlit-youtube-downloader
 ```
 
-3. Install the required dependencies
+3. Create a virtual environment
+
+```
+python3 -m venv venv
+```
+
+4. Activate the virtual environment
+
+```
+# windows
+.\venv\Scripts\activate
+```
+
+```
+# linux & macos
+source venv/bin/activate
+```
+
+5. Install the required dependencies
 
 ```
 pip install -r requirements.txt
@@ -37,7 +55,7 @@ pip install -r requirements.txt
 1. Run the Streamlit app
 
 ```
-streamlit run app.py
+streamlit run streamlit_app.py
 ```
 
 2. Open your web browser and navigate to the provided URL (usually http://localhost:8501) to access the application.

@@ -1,6 +1,5 @@
 import streamlit as st
 import pytube
-import os
 from pytube.cli import on_progress
 
 # Function to download YouTube video or audio by link
