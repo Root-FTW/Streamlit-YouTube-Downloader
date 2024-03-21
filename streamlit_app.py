@@ -57,6 +57,8 @@ def main():
         if download_filepath:
             download_link = upload_to_temp_service(download_filepath)
             if download_link:
+                # Modificar el enlace para incluir "/dl/" para la descarga directa
+                download_link = download_link.replace('/tmpfiles.org/', '/tmpfiles.org/dl/')
                 st.success(f"Descarga completada! Puedes descargar tu archivo desde aquí: {download_link}")
                 # Opcional: Eliminar el archivo descargado localmente después de subirlo
                 os.remove(download_filepath)
