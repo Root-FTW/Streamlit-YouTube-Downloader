@@ -4,6 +4,10 @@ from pytube.cli import on_progress
 import requests
 import os
 
+# Inicializar variables de sesión si no existen
+if 'download_link' not in st.session_state:
+    st.session_state['download_link'] = None
+
 # Función para descargar el vídeo o audio de YouTube
 def download_media(url, download_path, download_type='video', video_quality='720p', audio_quality='128kbps'):
     try:
@@ -34,38 +38,48 @@ def upload_to_temp_service(file_path):
     else:
         return None
 
+# Función para manejar el proceso de análisis y subida
+def analyze_and_upload():
+    video_link = st.session_state['video_link']
+    download_title, download_filepath = download_media(video_link, "temp_downloads", download_type=st.session_state['download_type'].lower(), 
+                                                       video_quality=st.session_state['video_quality'], audio_quality=st.session_state['audio_quality'])
+    if download_filepath:
+        download_link = upload_to_temp_service(download_filepath)
+        if download_link:
+            # Modificar el enlace para incluir "/dl/" para la descarga directa
+            download_link = download_link.replace('/tmpfiles.org/', '/tmpfiles.org/dl/')
+            st.session_state['download_link'] = download_link
+            st.success("Archivo listo para descargar.")
+            # Opcional: Eliminar el archivo descargado localmente después de subirlo
+            os.remove(download_filepath)
+        else:
+            st.error("No se pudo subir el archivo al servicio temporal.")
+    else:
+        st.error("La descarga falló.")
+
 # Aplicación principal de Streamlit
 def main():
     st.title("Descargador de YouTube")
-
-    video_link = st.text_input("Ingresa el enlace del vídeo de YouTube:")
-    download_type = st.radio("Selecciona el tipo de descarga:", ("Video", "Audio"))
+    
+    st.session_state['video_link'] = st.text_input("Ingresa el enlace del vídeo de YouTube:")
+    st.session_state['download_type'] = st.radio("Selecciona el tipo de descarga:", ("Video", "Audio"))
     quality_options = ["144p", "240p", "360p", "480p", "720p", "1080p"]
-    selected_video_quality = st.selectbox("Selecciona la calidad del vídeo:", quality_options)
+    st.session_state['video_quality'] = st.selectbox("Selecciona la calidad del vídeo:", quality_options)
     audio_quality_options = ["64kbps", "128kbps", "192kbps", "256kbps", "320kbps"]
-    selected_audio_quality = st.selectbox("Selecciona la calidad del audio:", audio_quality_options)
-
+    st.session_state['audio_quality'] = st.selectbox("Selecciona la calidad del audio:", audio_quality_options)
+    
     # Directorio temporal para almacenar la descarga antes de subirla
-    download_path = "temp_downloads"
+    if not os.path.exists("temp_downloads"):
+        os.makedirs("temp_downloads")
 
-    if not os.path.exists(download_path):
-        os.makedirs(download_path)
-
-    if st.button("Descargar") and video_link:
-        download_title, download_filepath = download_media(video_link, download_path, download_type=download_type.lower(), 
-                                                           video_quality=selected_video_quality, audio_quality=selected_audio_quality)
-        if download_filepath:
-            download_link = upload_to_temp_service(download_filepath)
-            if download_link:
-                # Modificar el enlace para incluir "/dl/" para la descarga directa
-                download_link = download_link.replace('/tmpfiles.org/', '/tmpfiles.org/dl/')
-                st.success(f"Descarga completada! Puedes descargar tu archivo desde aquí: {download_link}")
-                # Opcional: Eliminar el archivo descargado localmente después de subirlo
-                os.remove(download_filepath)
-            else:
-                st.error("No se pudo subir el archivo al servicio temporal.")
-        else:
-            st.error("La descarga falló.")
+    if st.session_state['download_link'] is None:
+        if st.button("Analizar"):
+            analyze_and_upload()
+    else:
+        st.success(f"Descarga completada! Puedes descargar tu archivo desde aquí: {st.session_state['download_link']}")
+        # Opción para resetear el estado y permitir una nueva descarga
+        if st.button("Realizar otra descarga"):
+            st.session_state['download_link'] = None
 
 if __name__ == "__main__":
     main()
