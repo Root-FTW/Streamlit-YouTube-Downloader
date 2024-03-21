@@ -31,15 +31,19 @@ def get_best_stream(url, max_size_mb=90):
         return best_format
 
 def download_video(url, best_format, download_path="temp_downloads"):
+    if not os.path.exists(download_path):
+        os.makedirs(download_path)
+    
     ydl_opts = {
         'format': f"{best_format['format_id']}",
-        'outtmpl': f"{download_path}/%(title)s.%(ext)s",
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
         filename = ydl.prepare_filename(best_format)
-        return filename
+        # Asegurarse de que el nombre del archivo refleje la ruta de descarga correcta
+        filepath = os.path.join(download_path, os.path.basename(filename))
+        return filepath
 
 def upload_to_temp_service(file_path):
     url = 'https://tmpfiles.org/api/v1/upload'
@@ -47,7 +51,9 @@ def upload_to_temp_service(file_path):
     response = requests.post(url, files=files)
     files['file'].close()
     if response.status_code == 200:
-        return response.text
+        # Ajustar según la estructura de la respuesta del servicio
+        download_link = response.text  # Ajustar esto según sea necesario
+        return download_link
     else:
         return None
 
@@ -58,14 +64,18 @@ def process_video():
     best_format = get_best_stream(video_link)
     if best_format:
         download_filepath = download_video(video_link, best_format)
-        download_link = upload_to_temp_service(download_filepath)
-        if download_link:
-            download_link = download_link.replace('/tmpfiles.org/', '/tmpfiles.org/dl/')
-            st.session_state['download_link'] = download_link
-            st.session_state['processing'] = False
-            os.remove(download_filepath)
+        if download_filepath:
+            download_link = upload_to_temp_service(download_filepath)
+            if download_link:
+                download_link = download_link.replace('/tmpfiles.org/', '/tmpfiles.org/dl/')
+                st.session_state['download_link'] = download_link
+                st.session_state['processing'] = False
+                os.remove(download_filepath)
+            else:
+                st.error("No se pudo subir el archivo al servicio temporal.")
+                st.session_state['processing'] = False
         else:
-            st.error("No se pudo subir el archivo al servicio temporal.")
+            st.error("La descarga falló.")
             st.session_state['processing'] = False
     else:
         st.error("No se encontró un formato adecuado.")
@@ -83,6 +93,7 @@ def main():
         st.markdown(f"[Descargar]({st.session_state['download_link']})", unsafe_allow_html=True)
         if st.button("Realizar otra descarga"):
             st.session_state['download_link'] = None
+            st.session_state['processing'] = False
     else:
         if st.button("Analizar"):
             process_video()
