@@ -1,8 +1,10 @@
 import streamlit as st
 import pytube
 from pytube.cli import on_progress
+import requests
+import os
 
-# Function to download YouTube video or audio by link
+# Función para descargar el vídeo o audio de YouTube
 def download_media(url, download_path, download_type='video', video_quality='720p', audio_quality='128kbps'):
     try:
         yt = pytube.YouTube(url, on_progress_callback=on_progress)
@@ -11,49 +13,57 @@ def download_media(url, download_path, download_type='video', video_quality='720
         else:
             stream = yt.streams.filter(res=video_quality).first()
         if stream:
-            stream.download(output_path=download_path)
-            return yt.title
+            # Descargar el stream seleccionado
+            filename = stream.download(output_path=download_path)
+            return yt.title, filename  # Devolver el título y la ruta del archivo descargado
         else:
-            st.error("Selected quality not available for download.")
-            return None
+            st.error("La calidad seleccionada no está disponible para la descarga.")
+            return None, None
     except Exception as e:
-        st.error(f"An error occurred: {e}")
+        st.error(f"Ocurrió un error: {e}")
+        return None, None
+
+# Función para subir el archivo al servicio de alojamiento temporal y obtener el enlace de descarga
+def upload_to_temp_service(file_path):
+    url = 'https://tmpfiles.org/api/v1/upload'
+    files = {'file': open(file_path, 'rb')}
+    response = requests.post(url, files=files)
+    files['file'].close()
+    if response.status_code == 200:
+        return response.text  # Asumiendo que la respuesta es directamente el enlace
+    else:
         return None
 
-# Main Streamlit app
+# Aplicación principal de Streamlit
 def main():
-    st.title("YouTube Downloader")
+    st.title("Descargador de YouTube")
 
-    # Input for YouTube video link
-    video_link = st.text_input("Enter YouTube Video Link:")
-
-    # Option to choose download type (video or audio)
-    download_type = st.radio("Select download type:", ("Video", "Audio"))
-
-    # Option to choose video quality
+    video_link = st.text_input("Ingresa el enlace del vídeo de YouTube:")
+    download_type = st.radio("Selecciona el tipo de descarga:", ("Video", "Audio"))
     quality_options = ["144p", "240p", "360p", "480p", "720p", "1080p"]
-    selected_video_quality = st.selectbox("Select video quality:", quality_options)
-
-    # Option to choose audio quality
+    selected_video_quality = st.selectbox("Selecciona la calidad del vídeo:", quality_options)
     audio_quality_options = ["64kbps", "128kbps", "192kbps", "256kbps", "320kbps"]
-    selected_audio_quality = st.selectbox("Select audio quality:", audio_quality_options)
+    selected_audio_quality = st.selectbox("Selecciona la calidad del audio:", audio_quality_options)
 
-    # Input for download path
-    download_path = st.text_input("Enter download path in your local storage:")
+    # Directorio temporal para almacenar la descarga antes de subirla
+    download_path = "temp_downloads"
 
-    if video_link:
-        # Display mini player for the video
-        st.subheader("Video Preview")
-        st.video(video_link)
+    if not os.path.exists(download_path):
+        os.makedirs(download_path)
 
-    if st.button("Download") and video_link and download_path:
-        download_title = download_media(video_link, download_path, download_type=download_type.lower(), 
-                                        video_quality=selected_video_quality, audio_quality=selected_audio_quality)
-        if download_title:
-            st.success(f"Download of '{download_title}' complete!")
+    if st.button("Descargar") and video_link:
+        download_title, download_filepath = download_media(video_link, download_path, download_type=download_type.lower(), 
+                                                           video_quality=selected_video_quality, audio_quality=selected_audio_quality)
+        if download_filepath:
+            download_link = upload_to_temp_service(download_filepath)
+            if download_link:
+                st.success(f"Descarga completada! Puedes descargar tu archivo desde aquí: {download_link}")
+                # Opcional: Eliminar el archivo descargado localmente después de subirlo
+                os.remove(download_filepath)
+            else:
+                st.error("No se pudo subir el archivo al servicio temporal.")
         else:
-            st.error("Download failed.")
+            st.error("La descarga falló.")
 
-# Run the app
 if __name__ == "__main__":
     main()
